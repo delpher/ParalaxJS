@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3D ish</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+<canvas id="display"></canvas>
+<script>
+    const canvas = document.getElementById('display');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const ctx = canvas.getContext('2d');
+    let mouseOffsetX = 0;
+    let mouseOffsetY = 0;
+
+    canvas.addEventListener('mousemove', function (e) {
+        mouseOffsetX = canvas.width / 2 - e.clientX;
+        mouseOffsetY = canvas.height / 2 - e.clientY;
+    });
+
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+
+    function draw(state) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        state.circles.map(circle => {
+            const x = circle.x * canvas.width + circle.distance * mouseOffsetX;
+            const y = circle.y * canvas.height + circle.distance * mouseOffsetY;
+            const radius = 50 * circle.distance;
+            const fill = formatColor(circle.color, circle.distance);
+            drawCircle(x, y, radius, fill);
+        });
+
+        return state;
+
+        function drawCircle(x, y, radius, fill) {
+            ctx.fillStyle = fill;
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function formatColor(color, distance) {
+            const variation = distance * 255;
+            let red = 255 - (1 - color.r) * variation;
+            let green = 255 - (1 - color.g) * variation;
+            let blue = 255 - (1 - color.b) * variation;
+            return `rgb(${red},${green},${blue})`
+        }
+    }
+
+    function createInitialState() {
+        return {
+            circles: new Array(200).fill(null).map(() => ({
+                distance: 1 - Math.random(),
+                color: {
+                    r: 0,
+                    g: 0,
+                    b: 1
+                },
+                x: Math.random(),
+                y: Math.random(),
+            })).toSorted(((t1, t2) => t1.distance - t2.distance))
+        }
+    }
+
+    run(createInitialState());
+
+    function run(state) {
+        requestAnimationFrame(() => run(draw(state)));
+    }
+
+</script>
+</body>
+</html>
